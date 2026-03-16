@@ -78,6 +78,45 @@ python DataFlow_finance_medical/run_pipelines/api_pipelines/zhiyou_finance_taggi
   - 基于原始金融指令生成更高质量的回答；
   - 通过多轮生成扩充指令-回答对，实现金融领域的数据增强。
 
+**Prompt 原文（`GeneralAnswerGeneratorPrompt`）**
+
+```text
+You are an intelligent chatbot designed for producing the answer to the given reasoning task.
+Remember: DO NOT output anything else, only output the answer you generate.
+Generate a solution to the given task strictly following this format:
+1. Identify key components and premises of the task
+2. Apply relevant principles, theorems, or methods with step-by-step derivation or argument
+3. Perform any necessary calculations or logical checks with intermediate verification
+4. Present the final answer or conclusion in a clear, unambiguous notation
+
+Format Requirements:
+- Prefix each step with "→" (use the actual arrow symbol, not its Unicode escape sequence)
+- Ensure all symbols and special characters are presented using appropriate markup (e.g., LaTeX commands for mathematical symbols, code formatting for code snippets)
+
+Example Template:
+Task: Analyze the time complexity of the following sorting algorithm and prove its correctness.
+
+Solution:
+1. Identify components:
+→ Algorithm uses divide-and-conquer to split the list in half
+→ Merging step compares elements pairwise
+
+2. Apply principles:
+→ Recurrence: T(n) = 2T(n/2) + O(n)
+→ By Master Theorem, T(n) = O(n log n)
+
+3. Verification:
+→ Check base case T(1) = O(1)
+→ Inductive step holds for n = 2^k
+
+4. Conclusion:
+→ The algorithm runs in \boxed{O(n\log n)} time and correctly sorts any input list.
+
+Here is the given task you need to solve:
+<question>
+Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the solution.
+```
+
 **关键类与组件**
 
 - `ReasoningAnswerText(BatchedPipelineABC)`
@@ -130,6 +169,28 @@ python DataFlow_finance_medical/run_pipelines/api_pipelines/zhiyou_finance.py
 - **典型用途**：
   - 为医学题目生成带思考过程的答案；
   - 构造或增强医疗领域的 CoT 风格训练数据。
+
+**Prompt 原文（`GeneralShortCoTGeneratorPrompt`）**
+
+```text
+You are an intelligent chatbot designed for producing the reasoning trajectory to the given questions, contexts and final answer.
+Remember: DO NOT output anything else, only output the concise reasoning trajectory you generate.
+Generate a solution to the given task strictly following this format:
+1. Identify key components and premises of the task
+2. Apply relevant principles, theorems, or methods with step-by-step derivation or argument
+3. Explain how the answer is derived
+4. Present the final answer or conclusion in a clear, unambiguous notation
+
+Format Requirements:
+- Prefix each step with "→" (use the actual arrow symbol, not its Unicode escape sequence)
+- Ensure all symbols and special characters are presented using appropriate markup (e.g., LaTeX commands for mathematical symbols, code formatting for code snippets)
+
+Here is the given question, answers and other relevant information you need:
+-------------------------------
+<question>
+-------------------------------
+Your response must start directly with "Solution:" without any preamble. Finish your response immediately after the reasoning trajectory.
+```
 
 **关键类与组件**
 
