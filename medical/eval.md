@@ -1,115 +1,57 @@
-# Eval Guide (Medical + Finance)
+# Medical & Finance 评测说明
 
-本文档基于以下脚本整理：
+本文档整理 **MedXpertQA**（医疗）与 **PIXIU**（金融）相关流程，并与仓库内脚本对应：
 
-- `medical/medical_eval.sh`
-- `medical/finance_eval.sh`
+- [medical_eval.sh](medical_eval.sh)  
+- [finance_eval.sh](finance_eval.sh)  
 
-目标：完成模型服务启动、医疗任务评测（MedXpertQA）以及金融任务评测（PIXIU）。
-
----
-
-## 0. 前置准备
-
-- 确认已经有可用模型权重路径。
-- 建议使用 `tmux` 分开运行：
-  - 一个窗口跑模型服务；
-  - 一个窗口跑推理与评测。
+> 文中出现的**绝对路径**为历史环境示例，请全部替换为你本机的 conda、工程与基准仓库路径。
 
 ---
 
-## 1. Medical Eval (MedXpertQA)
+## 0. 前置条件
 
-### 1.1 启动模型服务（sglang）
+- 已准备好待测模型权重与推理环境。  
+- 建议 **tmux** 分窗：一窗起模型服务，一窗跑推理与评分。  
+- **服务名、模型名**须在「启动脚本 / `model_info.json` / 推理脚本 / `eval.py`」等处保持一致。
 
-在一个新的 `tmux` 窗口执行：
+---
+
+## 1. 医疗：MedXpertQA
+
+### 1.1 启动推理服务（示例：SGLang）
+
+按你环境激活 conda，并修改启动脚本中的**模型路径**与 **served model name**，例如：
 
 ```bash
-export LD_LIBRARY_PATH=/usr/local/cuda/compat:$LD_LIBRARY_PATH
-export LD_PRELOAD=/usr/local/cuda/compat/libcuda.so
-
-cd /share/project/xiaozhiyou/DataFlow/workspace
-source /share/project/miaode/miniconda3/bin/activate
+# 示例：按本机修改路径与环境
 conda activate sglang
+bash /path/to/your/launch_reward_server.sh
 ```
 
-启动前需要先修改：
+在 MedXpertQA 评测包的 `config/model_info.json` 中注册**同名**模型。
 
-- `/share/project/xiaozhiyou/DataFlow/workspace/launch_reward_server.sh`
-  - 模型路径
-  - 模型名（serve 的 model name）
+### 1.2 推理
 
-修改完成后启动服务：
-
-```bash
-bash launch_reward_server.sh
-```
-
-同时确保在以下文件中注册同名模型：
-
-- `/share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval/config/model_info.json`
-
----
-
-### 1.2 执行推理脚本
-
-在另一个窗口执行：
-
-```bash
-cd /share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval
-source /share/project/xiaozhiyou/miniconda3/bin/activate
-conda activate pixiu
-```
-
-执行前修改：
-
-- `/share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval/scripts/run_baai.sh`
-  - `models=${1:-"qwen3_4b_instruct"}` 改为你实际 serve 的模型名
-- `/share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval/config/model_info.json`
-  - 确认已添加同名模型配置
-
-运行：
+进入 MedXpertQA 的 `eval` 目录，修改 `scripts/run_baai.sh` 中的默认模型名、`model_info.json` 中的条目，然后：
 
 ```bash
 bash scripts/run_baai.sh
 ```
 
----
+### 1.3 评分
 
-### 1.3 执行评估脚本
-
-执行前修改：
-
-- `/share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval/eval.py`
-  - 将 `model = "qwen3_4b_instruct"` 改成你当前 serve 的模型名
-
-然后执行：
+将 `eval.py` 中的 `model = "..."` 改为当前使用的模型标识，再执行：
 
 ```bash
-cd /share/project/xzy_datas_models/infinity/Medical/Benchmarks/MedXpertQA/eval
-source /share/project/xiaozhiyou/miniconda3/bin/activate
-conda activate pixiu
 python3 eval.py
 ```
 
 ---
 
-## 2. Finance Eval (PIXIU)
+## 2. 金融：PIXIU
 
-在 `PIXIU` 路径下执行：
-
-```bash
-cd PIXIU
-conda activate pixiu
-```
-
-执行前先修改：
-
-- `/share/project/xzy_datas_models/infinity/Finance/Benchmarks/PIXIU/scripts/run_evaluation_baai.sh`
-  - 修改 `--model_args` 参数
-  - 将其中 `pretrained` 和 `tokenizer` 指向训练后的模型
-
-修改完成后运行：
+进入 PIXIU 工程目录，激活环境后，修改 `scripts/run_evaluation_baai.sh`（或等价脚本）中的 `--model_args`，使 `pretrained` 与 `tokenizer` 指向待测模型，然后：
 
 ```bash
 bash scripts/run_evaluation_baai.sh
@@ -117,17 +59,15 @@ bash scripts/run_evaluation_baai.sh
 
 ---
 
-## 3. 常见检查项
+## 3. 排错清单
 
-- 模型服务名必须和以下位置保持一致：
-  - `launch_reward_server.sh`
-  - `model_info.json`
-  - `run_baai.sh`
-  - `eval.py`
-- `conda` 环境是否正确：
-  - 服务：`sglang`
-  - 评测：`pixiu`
-- 若结果异常，优先检查：
-  - 模型路径是否存在；
-  - tokenizer 是否与模型匹配；
-  - 服务是否已成功启动并可访问。
+- [ ] 推理服务已监听且模型名与评测配置一致  
+- [ ] tokenizer 与权重匹配  
+- [ ] conda 环境（如服务用 `sglang`、评测用 `pixiu`）正确  
+- [ ] 无硬编码旧集群路径导致找不到文件  
+
+---
+
+## 相关链接
+
+- 仓库总览：[Readme.md](../Readme.md)  

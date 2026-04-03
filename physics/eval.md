@@ -1,50 +1,37 @@
-# Eval Guide (Physics)
+# Physics 评测说明
 
-本文档说明物理方向的评测方案，基于 **OpenCompass** 框架，评测基准为 **UGPhysics**。
+使用 [OpenCompass](https://github.com/open-compass/opencompass)，基准为 **UGPhysics**（大学物理综合推理）。
 
 ---
 
-## 0. 评测框架
-
-使用 [OpenCompass](https://github.com/open-compass/opencompass) 进行物理方向评测。
+## 1. 安装框架
 
 ```bash
 git clone https://github.com/open-compass/opencompass.git
 cd opencompass
 pip install -e .
+pip install -e ".[full]"
 ```
 
----
-
-## 1. 评测基准
-
-| Benchmark | 说明 | 指标 |
-|-----------|------|------|
-| **UGPhysics** | 大学物理综合推理评测集，覆盖经典力学、电磁学、热力学、光学、近代物理等方向 | accuracy |
-
-UGPhysics 面向大学本科物理水平，题目以推导计算为主，是评测模型物理推理深度的主要基准。
-
----
-
-## 2. 环境准备
+确认数据目录存在（名称以当前 OpenCompass 版本为准）：
 
 ```bash
-cd opencompass
-
-# 安装依赖
-pip install -e ".[full]"
-
-# 确认 UGPhysics 数据已下载
 ls data/ugphysics/
 ```
 
-若数据目录为空，参考 OpenCompass 官方文档或 UGPhysics 原始仓库下载对应数据集。
+若为空，按 OpenCompass 或 UGPhysics 官方说明下载数据。
 
 ---
 
-## 3. 启动模型服务
+## 2. 评测基准
 
-在一个 `tmux` 窗口中启动模型服务（以 vLLM 为例）：
+| Benchmark | 说明 | 指标 |
+|-----------|------|------|
+| **UGPhysics** | 本科物理综合，含力学、电磁、热学、光学、近代物理等 | accuracy |
+
+---
+
+## 3. 启动推理服务（示例：vLLM）
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
@@ -58,7 +45,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 ## 4. 运行评测
 
-在另一个 `tmux` 窗口执行：
+**HuggingFace 模型路径：**
 
 ```bash
 cd opencompass
@@ -72,7 +59,7 @@ python run.py \
     --reuse latest
 ```
 
-或通过 API 方式评测（适合已部署服务的场景）：
+**OpenAI 兼容 API：**
 
 ```bash
 python run.py \
@@ -82,14 +69,13 @@ python run.py \
     --work-dir ./outputs/physics
 ```
 
-结果输出在 `./outputs/physics/` 目录下，汇总准确率见 `summary_*.csv`。
+汇总结果见 `./outputs/physics/` 下 `summary_*.csv`。
 
 ---
 
-## 5. 常见检查项
+## 5. 排错要点
 
-- 模型服务名与 OpenCompass config 中 `model_name` 保持一致；
-- UGPhysics 默认使用 `gen` 模式（生成式），需确认模型以对话格式（chat template）推理；
-- 若准确率异常，优先检查答案提取规则是否匹配模型输出格式（数值+单位 vs. 纯数字）；
-- 建议同时跑 `--reuse` 保留中间推理结果，方便后续 debug 或更换评分方式；
-- UGPhysics 部分题目答案含量纲（如 `9.8 m/s²`），答案比对时注意单位规范化处理。
+- 服务中的模型名与 config 中 `model_name` 一致。  
+- `ugphysics_gen` 为生成式设定，需使用正确的 **chat template**。  
+- 部分答案含**单位**，比对前宜做规范化。  
+- 建议保留 `--reuse` 便于复现与 debug。  
